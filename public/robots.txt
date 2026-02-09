@@ -1,0 +1,21 @@
+# ZION Movies - Robots.txt
+# https://zionmovies.pro.et
+
+User-agent: *
+Allow: /
+Allow: /library
+Allow: /search
+Allow: /movies
+Allow: /tv
+Allow: /upcoming
+Allow: /genre/
+Allow: /movie/
+Allow: /tv/
+
+# Sensitive areas - do not index (COPYRIGHT PROTECTION)
+Disallow: /api/
+Disallow: /admin/
+Disallow: /watch/
+
+# Sitemap location
+Sitemap: https://zionmovies.pro.et/sitemap.xml

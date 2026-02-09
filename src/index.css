@@ -1,0 +1,149 @@
+@import "tailwindcss";
+
+@theme {
+  --color-background: hsl(224 71% 4%);
+  --color-foreground: hsl(213 31% 91%);
+  --color-card: hsl(224 71% 4%);
+  --color-card-foreground: hsl(213 31% 91%);
+  --color-popover: hsl(224 71% 4%);
+  --color-popover-foreground: hsl(213 31% 91%);
+  --color-primary: hsl(20 90% 48%);
+  --color-primary-foreground: hsl(0 0% 100%);
+  /* Add other theme variables here if needed using --color-* syntax for v4 */
+}
+
+/* Custom Utilities needing to be outside @theme if they use @apply or standard CSS */
+:root {
+  --text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  --text-shadow-strong: 0 4px 8px rgba(0, 0, 0, 0.8);
+  --zion-orange-primary: #ff6700;
+  --zion-orange-hover: #ff8534;
+  --zion-orange-light: #ffa366;
+}
+
+body {
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+  @apply border-gray-800 relative;
+}
+
+/* Cinematic Vignette */
+body::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  background: radial-gradient(circle at center, transparent 0%, rgba(0, 0, 0, 0.4) 100%);
+  z-index: 50;
+}
+
+/* Custom Classes */
+.glass {
+  @apply bg-black/40 backdrop-blur-md border border-white/10;
+}
+
+.glass-strong {
+  @apply bg-black/60 backdrop-blur-xl border border-white/10 hover:bg-black/70;
+}
+
+.glass-medium {
+  @apply bg-white/5 backdrop-blur-lg border border-white/10;
+}
+
+.text-shadow {
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.text-shadow-strong {
+  text-shadow: 0 4px 8px rgba(0, 0, 0, 0.8);
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.5s ease-out forwards;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.5s ease-out forwards;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.gradient-text {
+  background: linear-gradient(120deg, var(--zion-orange-primary), var(--zion-orange-light));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.btn-primary {
+  @apply inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-bold transition-all duration-300;
+  background: linear-gradient(135deg, var(--zion-orange-primary), var(--zion-orange-hover));
+  box-shadow: 0 4px 20px rgba(255, 103, 0, 0.3);
+  color: white;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px rgba(255, 103, 0, 0.5);
+}
+
+.btn-glass {
+  @apply inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-bold transition-all duration-300;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+.btn-glass:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 103, 0, 0.4);
+  transform: translateY(-2px);
+}
+
+/* Logo Animation */
+.gradient-text-animated {
+  background: linear-gradient(-45deg, #ff6700, #ff8e53, #ef4444, #ff6700);
+  background-size: 300%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: gradient-anim 4s ease infinite;
+}
+
+@keyframes gradient-anim {
+  0% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0% 50%;
+  }
+}
