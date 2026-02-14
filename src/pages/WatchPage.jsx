@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom';
 import WatchPlayer from '@/components/WatchPlayer';
 
 import { getMovieDetails, getTVShowDetails } from '@/lib/tmdb';
-import { Loader2, AlertTriangle, MessageCircle, RefreshCw } from 'lucide-react';
+import { Play, AlertTriangle, Server, Star, X, ShieldAlert, MessageCircle, Send, Loader2, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export default function WatchPage() {
@@ -76,6 +76,15 @@ export default function WatchPage() {
                     >
                         <MessageCircle className="w-4 h-4" />
                         <span className="font-bold text-sm">Feedback</span>
+                    </a>
+                    <a
+                        href="https://t.me/zionmovies1"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 text-white hover:text-blue-200 bg-[#229ED9] hover:bg-[#1e8dbf] px-4 py-2 rounded-full transition-all shadow-[0_0_15px_rgba(34,158,217,0.4)] hover:shadow-[0_0_20px_rgba(34,158,217,0.6)] ml-3"
+                    >
+                        <Send className="w-4 h-4 fill-current" />
+                        <span className="font-bold text-sm">Join Channel</span>
                     </a>
                 </div>
 
