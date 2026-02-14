@@ -1,10 +1,9 @@
 // EmbedMaster (Primary - Server 1)
 export const getEmbedMasterUrl = (tmdbId, season, episode) => {
-    const playerId = 'odbbe8glyyvkt6qd';
     if (season && episode) {
-        return `https://embedmaster.link/${playerId}/tv/${tmdbId}/${season}/${episode}`;
+        return `https://embedmaster.link/tv/${tmdbId}/${season}/${episode}`;
     }
-    return `https://embedmaster.link/${playerId}/movie/${tmdbId}`;
+    return `https://embedmaster.link/movie/${tmdbId}`;
 };
 
 // VidSrc.me (Server 2 - Original)

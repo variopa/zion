@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Player Explorer</title>
+    <style>
+        body,
+        html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #000;
+        }
+
+        #player-container {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: 0;
+        }
+
+        /* THE PULSE SHIELD OVERLAY */
+        #pulse-shield {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 9999;
+            background: transparent;
+            cursor: pointer;
+        }
+
+        /* Visual indicator for debug (hidden by default) */
+        #shield-status {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.5);
+            color: #f97316;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-family: sans-serif;
+            font-size: 10px;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        #loader {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #f97316;
+            font-family: sans-serif;
+            font-weight: bold;
+            z-index: -1;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="loader">Loading Secure Stream...</div>
+    <div id="player-container">
+        <!-- NO SANDBOX: To avoid detection -->
+        <iframe id="video-iframe" allowfullscreen
+            allow="autoplay; fullscreen; picture-in-picture; encrypted-media"></iframe>
+        <div id="pulse-shield"></div>
+        <div id="shield-status">Pulse Active</div>
+    </div>
+
+    <script>
+        (function () {
+            const log = (msg) => console.log("%c🛡️ ZION", "color: #f97316; font-weight: bold;", msg);
+            log("Pulsed Click-Buffer Isolation (V3) Active");
+
+            const shield = document.getElementById('pulse-shield');
+            const status = document.getElementById('shield-status');
+            let pulseTimer = null;
+
+            /**
+             * 1. THE POISON PILL (Wrapper Context)
+             * Lock down methods to prevent bypasses inside our domain.
+             */
+            try {
+                Object.defineProperty(window, 'open', {
+                    value: function () { log("Blocked Popup Attempt"); return null; },
+                    writable: false, configurable: false
+                });
+            } catch (e) { window.open = function () { return null; }; }
+
+            window.onbeforeunload = function () { return false; };
+
+            /**
+             * 2. THE PULSE SHIELD
+             * This captures ad-triggers and allows 2-second interaction windows.
+             */
+            shield.addEventListener('click', function (e) {
+                log("Click Captured & Neutralized");
+
+                // Temporarily disable shield to allow legitimate interaction (pause/volume)
+                shield.style.pointerEvents = 'none';
+                status.innerText = "Interaction Window: 2s";
+                status.style.opacity = "1";
+
+                clearTimeout(pulseTimer);
+                pulseTimer = setTimeout(() => {
+                    shield.style.pointerEvents = 'auto';
+                    status.innerText = "Shield Re-engaged";
+                    setTimeout(() => { status.style.opacity = "0"; }, 1000);
+                    log("Shield Restored");
+                }, 2000); // 2 second window
+            });
+
+            /**
+             * 3. INITIALIZE
+             */
+            const urlParams = new URLSearchParams(window.location.search);
+            const targetUrl = urlParams.get('url');
+
+            if (targetUrl) {
+                const iframe = document.getElementById('video-iframe');
+                iframe.src = targetUrl;
+
+                window.addEventListener('message', function (event) {
+                    if (event.data && typeof event.data === 'object') {
+                        window.parent.postMessage(event.data, '*');
+                    }
+                });
+            } else {
+                document.getElementById('loader').innerText = "Error: No Stream URL";
+            }
+        })();
+    </script>
+</body>
+
+</html>

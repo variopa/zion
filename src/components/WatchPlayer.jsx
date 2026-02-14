@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { getTVSeasonDetails } from '@/lib/tmdb';
 import { PROVIDERS } from '@/lib/providers';
 import { useAnalytics } from '@/hooks/useAnalytics';
-import { Play, AlertTriangle, Server, Star, Shield } from 'lucide-react';
+import { Play, AlertTriangle, Server, Star } from 'lucide-react';
 
 export default function WatchPlayer({ item, id, type = 'movie' }) {
     const [selectedProvider, setSelectedProvider] = useState(PROVIDERS[0]);
@@ -11,9 +11,6 @@ export default function WatchPlayer({ item, id, type = 'movie' }) {
     const [embedUrl, setEmbedUrl] = useState('');
     const [isPlaying, setIsPlaying] = useState(false);
     const [availableEpisodes, setAvailableEpisodes] = useState([]);
-    // Shield State
-    const [shieldActive, setShieldActive] = useState(true);
-    const [clicksAbsorbed, setClicksAbsorbed] = useState(0);
 
     const { trackProviderSwitch, trackEpisodeSelect, trackContentPlay } = useAnalytics();
 
@@ -84,30 +81,10 @@ export default function WatchPlayer({ item, id, type = 'movie' }) {
                     </div>
                 )}
 
-                {/* INTERCEPTOR SHIELD: Eats first 2 clicks to prevent popups */}
-                {shieldActive && (
-                    <div
-                        className="absolute inset-0 z-50 cursor-pointer"
-                        onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            setClicksAbsorbed(prev => {
-                                const newCount = prev + 1;
-                                if (newCount >= 2) {
-                                    setShieldActive(false);
-                                }
-                                return newCount;
-                            });
-                        }}
-                    >
-                        {/* Visual Debug (Optional, kept transparent for production) */}
-                    </div>
-                )}
-
                 {isPlaying && (
                     <iframe
                         key={`${selectedProvider.id}-${season}-${episode}`}
-                        src={(window.location.hostname === 'localhost' ? 'http://localhost:8080/embed_wrapper.php' : '/embed_wrapper.php') + `?url=${encodeURIComponent(embedUrl)}`}
+                        src={`/player.html?url=${encodeURIComponent(embedUrl)}`}
                         className="absolute inset-0 w-full h-full z-20 rounded-2xl"
                         allowFullScreen
                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
@@ -132,10 +109,6 @@ export default function WatchPlayer({ item, id, type = 'movie' }) {
                         ) : (
                             <span className="text-gray-400">{item.tagline || 'Now Playing'}</span>
                         )}
-                        <span className="flex items-center gap-2 px-3 py-1 ml-2 rounded-full bg-green-500/10 border border-green-500/20 text-green-400 text-xs font-bold">
-                            <Shield className="w-3 h-3" />
-                            <span className="uppercase tracking-wider">SECURE SHIELD: {shieldActive ? 'ACTIVE' : 'STANDBY'}</span>
-                        </span>
                     </p>
                 </div>
 
