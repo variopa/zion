@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { getTVSeasonDetails } from '@/lib/tmdb';
 import { PROVIDERS } from '@/lib/providers';
 import { useAnalytics } from '@/hooks/useAnalytics';
-import { Play, AlertTriangle, Server, Star } from 'lucide-react';
+import { Play, AlertTriangle, Server, Star, X, ShieldAlert } from 'lucide-react';
 
 export default function WatchPlayer({ item, id, type = 'movie' }) {
     const [selectedProvider, setSelectedProvider] = useState(PROVIDERS[0]);
@@ -11,8 +11,33 @@ export default function WatchPlayer({ item, id, type = 'movie' }) {
     const [embedUrl, setEmbedUrl] = useState('');
     const [isPlaying, setIsPlaying] = useState(false);
     const [availableEpisodes, setAvailableEpisodes] = useState([]);
+    const [showAdBlockModal, setShowAdBlockModal] = useState(false);
+    const [showShieldGuide, setShowShieldGuide] = useState(false);
 
     const { trackProviderSwitch, trackEpisodeSelect, trackContentPlay } = useAnalytics();
+
+    // Modal & Guide Logic
+    useEffect(() => {
+        if (selectedProvider.id === 'embedmaster') {
+            setShowShieldGuide(false);
+            // Always show modal after delay when switching to this provider
+            const timer = setTimeout(() => setShowAdBlockModal(true), 1500);
+            return () => clearTimeout(timer);
+        } else {
+            setShowAdBlockModal(false);
+            // Always show guide after delay when switching to these providers
+            const timer = setTimeout(() => setShowShieldGuide(true), 1500);
+            return () => clearTimeout(timer);
+        }
+    }, [selectedProvider]);
+
+    const dismissAdBlockModal = () => {
+        setShowAdBlockModal(false);
+    };
+
+    const dismissShieldGuide = () => {
+        setShowShieldGuide(false);
+    };
 
     // Fetch season details when season changes
     useEffect(() => {
@@ -84,7 +109,7 @@ export default function WatchPlayer({ item, id, type = 'movie' }) {
                 {isPlaying && (
                     <iframe
                         key={`${selectedProvider.id}-${season}-${episode}`}
-                        src={`/player.html?url=${encodeURIComponent(embedUrl)}`}
+                        src={selectedProvider.id === 'embedmaster' ? embedUrl : `/player.html?url=${encodeURIComponent(embedUrl)}`}
                         className="absolute inset-0 w-full h-full z-20 rounded-2xl"
                         allowFullScreen
                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
@@ -92,6 +117,85 @@ export default function WatchPlayer({ item, id, type = 'movie' }) {
                     />
                 )}
             </div>
+
+            {/* AdBlock Modal (EmbedMaster) */}
+            {showAdBlockModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
+                    <div className="bg-slate-900 border border-orange-500/30 p-6 rounded-2xl shadow-2xl max-w-md w-full relative overflow-hidden text-center space-y-4 animate-in zoom-in-95 duration-300">
+                        {/* Glow */}
+                        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-1/2 bg-orange-500/20 blur-3xl -z-10"></div>
+
+                        <div className="w-16 h-16 bg-orange-500/10 rounded-full flex items-center justify-center mx-auto ring-1 ring-orange-500/40">
+                            <ShieldAlert className="w-8 h-8 text-orange-500" />
+                        </div>
+
+                        <div className="space-y-2">
+                            <h3 className="text-xl font-bold text-white">Ad Blocker Recommended</h3>
+                            <p className="text-gray-300 text-sm leading-relaxed">
+                                For the smoothest experience on <span className="text-orange-400 font-bold">Server 1</span>, we highly recommend enabling an Ad Blocker to prevent popup ads.
+                            </p>
+                        </div>
+
+                        <button
+                            onClick={dismissAdBlockModal}
+                            className="w-full py-3 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-xl transition-all shadow-lg shadow-orange-500/25 active:scale-95"
+                        >
+                            Okay, Got it
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {/* Shield Guide (Other Providers) */}
+            {showShieldGuide && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-300">
+                    <div className="bg-[#0a0a0a] border border-blue-500/30 p-8 rounded-3xl shadow-2xl max-w-md w-full relative overflow-hidden text-center space-y-6 animate-in zoom-in-95 duration-300">
+                        {/* Glow */}
+                        <div className="absolute top-0 right-0 w-64 h-64 bg-blue-600/10 blur-[100px] -z-10 rounded-full pointer-events-none"></div>
+                        <div className="absolute bottom-0 left-0 w-64 h-64 bg-orange-500/10 blur-[100px] -z-10 rounded-full pointer-events-none"></div>
+
+                        <div className="w-20 h-20 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-2xl flex items-center justify-center mx-auto ring-1 ring-blue-500/30 shadow-[0_0_30px_rgba(59,130,246,0.15)]">
+                            <ShieldAlert className="w-10 h-10 text-blue-400" />
+                        </div>
+
+                        <div className="space-y-3">
+                            <h3 className="text-2xl font-bold text-white tracking-tight">Secure Playback Active</h3>
+                            <p className="text-gray-400 text-sm leading-relaxed">
+                                We've enabled the <span className="text-blue-400 font-bold">Interceptor Shield</span> to protect you from malicious ads and redirects.
+                            </p>
+
+                            <div className="bg-white/5 border border-white/5 p-4 rounded-xl text-left space-y-3 mt-4">
+                                <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider">How to Watch</h4>
+                                <div className="space-y-3">
+                                    <div className="flex items-start gap-4">
+                                        <div className="w-8 h-8 rounded-lg bg-blue-500/20 text-blue-400 flex items-center justify-center font-bold text-sm shrink-0 border border-blue-500/20">1</div>
+                                        <div>
+                                            <p className="text-white font-medium text-sm">First Click</p>
+                                            <p className="text-xs text-gray-500 mt-0.5">Disengages the security shield.</p>
+                                        </div>
+                                    </div>
+                                    <div className="w-full h-px bg-white/5"></div>
+                                    <div className="flex items-start gap-4">
+                                        <div className="w-8 h-8 rounded-lg bg-orange-500/20 text-orange-400 flex items-center justify-center font-bold text-sm shrink-0 border border-orange-500/20">2</div>
+                                        <div>
+                                            <p className="text-white font-medium text-sm">Second Click</p>
+                                            <p className="text-xs text-gray-500 mt-0.5">Starts the video playback safely.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button
+                            onClick={dismissShieldGuide}
+                            className="w-full py-3.5 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 text-white font-bold rounded-xl transition-all shadow-lg shadow-blue-500/25 active:scale-95 flex items-center justify-center gap-2 group"
+                        >
+                            <span>I Understand</span>
+                            <Play className="w-4 h-4 fill-current group-hover:translate-x-0.5 transition-transform" />
+                        </button>
+                    </div>
+                </div>
+            )}
 
             {/* Controls & Info Bar */}
             <div className="flex flex-col xl:flex-row gap-8 items-start justify-between bg-white/5 backdrop-blur-md p-6 rounded-3xl border border-white/5">

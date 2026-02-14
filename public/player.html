@@ -82,7 +82,7 @@
     <script>
         (function () {
             const log = (msg) => console.log("%c🛡️ ZION", "color: #f97316; font-weight: bold;", msg);
-            log("Pulsed Click-Buffer Isolation (V3) Active");
+            log("Pulsed Click-Buffer Isolation (V3) Restored");
 
             const shield = document.getElementById('pulse-shield');
             const status = document.getElementById('shield-status');
@@ -90,7 +90,6 @@
 
             /**
              * 1. THE POISON PILL (Wrapper Context)
-             * Lock down methods to prevent bypasses inside our domain.
              */
             try {
                 Object.defineProperty(window, 'open', {
@@ -103,12 +102,12 @@
 
             /**
              * 2. THE PULSE SHIELD
-             * This captures ad-triggers and allows 2-second interaction windows.
+             * Captures initial ad-triggers, then opens a 2s window for the actual player.
              */
             shield.addEventListener('click', function (e) {
                 log("Click Captured & Neutralized");
 
-                // Temporarily disable shield to allow legitimate interaction (pause/volume)
+                // Temporarily disable shield to allow player interaction
                 shield.style.pointerEvents = 'none';
                 status.innerText = "Interaction Window: 2s";
                 status.style.opacity = "1";
@@ -119,7 +118,7 @@
                     status.innerText = "Shield Re-engaged";
                     setTimeout(() => { status.style.opacity = "0"; }, 1000);
                     log("Shield Restored");
-                }, 2000); // 2 second window
+                }, 2000);
             });
 
             /**
