@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 
 export default function Logo({ className = '' }) {
     return (
-        <Link to="/library" className={`flex items-center gap-2 ${className}`}>
+        <Link to="/" className={`flex items-center gap-2 ${className}`}>
             <div className="relative group">
                 {/* Glow effect */}
                 <div className="absolute inset-0 blur-xl bg-gradient-to-r from-orange-500 to-red-600 opacity-50 group-hover:opacity-75 transition-opacity duration-500 animate-pulse"></div>

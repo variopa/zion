@@ -36,7 +36,7 @@ export default function BottomNav() {
     };
 
     const tabs = [
-        { name: 'Home', icon: Home, path: '/library' },
+        { name: 'Home', icon: Home, path: '/' },
         { name: 'Movies', icon: PlayCircle, path: '/movies' },
         { name: 'TV Show', icon: Monitor, path: '/tv' },
         { name: 'New', icon: Compass, path: '/upcoming' },

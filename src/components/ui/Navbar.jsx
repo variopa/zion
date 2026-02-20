@@ -64,7 +64,7 @@ export default function Navbar() {
     };
 
     const navLinks = [
-        { name: 'Home', href: '/library' },
+        { name: 'Home', href: '/' },
         { name: 'Movies', href: '/movies' },
         { name: 'TV Shows', href: '/tv' },
         { name: 'New & Popular', href: '/upcoming' },

@@ -20,35 +20,34 @@ export default function Home() {
     useEffect(() => {
         const fetchAllData = async () => {
             try {
-                // Fetch Trending for Hero and Row
-                const trendingData = await getTrending('movie', 'day');
+                // Fetch Trending for Hero and Row - Use 'week' for more HD content
+                const trendingData = await getTrending('movie', 'week');
                 const results = trendingData.results || [];
 
                 const getDaysDiff = (dateStr) => {
                     if (!dateStr) return 0;
-                    return (new Date() - new Date(dateStr)) / (1000 * 60 * 60 * 24);
+                    const diff = (new Date() - new Date(dateStr)) / (1000 * 60 * 60 * 24);
+                    return isNaN(diff) ? 0 : diff;
                 };
 
-                // HD Filter: Released > 45 days ago
-                const hdMovies = results.filter(m => getDaysDiff(m.release_date) > 30); // Loosened from 45 to 30
+                // HD Filter: Released > 45 days ago (Strict)
+                const hdMovies = results.filter(m => getDaysDiff(m.release_date) > 45);
 
-                // Hero Selection: Prefer HD, but always fill to 5
+                // Hero Selection: Prefer HD movies, if not enough HD, use trending as fallback for hero ONLY
                 let heroSelection = [];
                 if (hdMovies.length >= 5) {
                     heroSelection = hdMovies.sort(() => 0.5 - Math.random()).slice(0, 5);
                 } else {
-                    // Start with HD, fill rest with whatever is trending
-                    const others = results.filter(m => !hdMovies.find(h => h.id === m.id));
-                    heroSelection = [...hdMovies, ...others.slice(0, 5 - hdMovies.length)];
+                    heroSelection = results.slice(0, 5);
                 }
 
                 setHeroMovies(heroSelection);
                 setHeroLoading(false);
 
-                // Trending Row: Fallback to all trending if no HD found
+                // Trending Row: Show ONLY HD movies
                 setRows(prev => ({
                     ...prev,
-                    trending: hdMovies.length > 5 ? hdMovies : results
+                    trending: hdMovies
                 }));
 
                 // Fetch other rows
@@ -66,11 +65,11 @@ export default function Home() {
 
                 // HD Filter for popular section
                 const popularResults = popularData?.results || [];
-                const popularHD = popularResults.filter(m => getDaysDiff(m.release_date) > 30);
+                const popularHD = popularResults.filter(m => getDaysDiff(m.release_date) > 45);
 
                 setRows(prev => ({
                     ...prev,
-                    popular: popularHD.length >= 10 ? popularHD : popularResults,
+                    popular: popularHD,
                     topRated: topRatedData?.results || [],
                     nowPlaying: nowPlayingData?.results || [],
                     popularTV: popularTVData?.results || []
