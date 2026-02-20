@@ -30,22 +30,26 @@ export default function Home() {
                 };
 
                 // HD Filter: Released > 45 days ago
-                const hdMovies = results.filter(m => getDaysDiff(m.release_date) > 45);
-                const camMovies = results.filter(m => getDaysDiff(m.release_date) <= 45);
+                const hdMovies = results.filter(m => getDaysDiff(m.release_date) > 30); // Loosened from 45 to 30
 
-                // Hero Selection: Only random HD movies
+                // Hero Selection: Prefer HD, but always fill to 5
                 let heroSelection = [];
                 if (hdMovies.length >= 5) {
                     heroSelection = hdMovies.sort(() => 0.5 - Math.random()).slice(0, 5);
                 } else {
-                    heroSelection = hdMovies.concat(results.slice(0, 5 - hdMovies.length));
+                    // Start with HD, fill rest with whatever is trending
+                    const others = results.filter(m => !hdMovies.find(h => h.id === m.id));
+                    heroSelection = [...hdMovies, ...others.slice(0, 5 - hdMovies.length)];
                 }
 
                 setHeroMovies(heroSelection);
                 setHeroLoading(false);
 
-                // Trending Row: Show ONLY HD movies as requested ("show hd only")
-                setRows(prev => ({ ...prev, trending: hdMovies }));
+                // Trending Row: Fallback to all trending if no HD found
+                setRows(prev => ({
+                    ...prev,
+                    trending: hdMovies.length > 5 ? hdMovies : results
+                }));
 
                 // Fetch other rows
                 const [
@@ -60,17 +64,16 @@ export default function Home() {
                     getPopularTVShows()
                 ]);
 
-                // Filter lists to prioritize HD where possible or at least mix intelligently?
-                // User said "update other sections to show less cam and more hd"
-                // We'll filter Popular to be mostly HD
-                const popularHD = (popularData.results || []).filter(m => getDaysDiff(m.release_date) > 30);
+                // HD Filter for popular section
+                const popularResults = popularData?.results || [];
+                const popularHD = popularResults.filter(m => getDaysDiff(m.release_date) > 30);
 
                 setRows(prev => ({
                     ...prev,
-                    popular: popularHD.length > 0 ? popularHD : popularData.results,
-                    topRated: topRatedData.results || [], // Top rated usually old enough to be HD
-                    nowPlaying: nowPlayingData.results || [], // These act as "Coming Soon" or "In Theaters"
-                    popularTV: popularTVData.results || []
+                    popular: popularHD.length >= 10 ? popularHD : popularResults,
+                    topRated: topRatedData?.results || [],
+                    nowPlaying: nowPlayingData?.results || [],
+                    popularTV: popularTVData?.results || []
                 }));
 
             } catch (error) {

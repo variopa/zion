@@ -90,12 +90,73 @@ export default function WatchPage() {
 
                 <WatchPlayer item={item} id={id} type={type} />
 
-                <div className="mt-8 bg-amber-500/5 border border-amber-500/10 p-4 rounded-xl flex items-start gap-3">
-                    <AlertTriangle className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
-                    <p className="text-sm text-gray-400">
-                        If you experience any playback errors, please try switching servers inside the player window or
-                        <span onClick={() => window.location.reload()} className="text-amber-500 hover:underline cursor-pointer ml-1 font-bold">refresh the page</span>.
-                    </p>
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">
+                    {/* Main Details */}
+                    <div className="lg:col-span-2 space-y-6">
+                        <div className="bg-white/5 backdrop-blur-md rounded-3xl p-6 md:p-8 border border-white/5 space-y-6">
+                            <div className="flex flex-wrap items-center gap-4 text-sm text-gray-400">
+                                {item.release_date && (
+                                    <span className="px-3 py-1 rounded-full bg-white/5 border border-white/10">
+                                        {new Date(item.release_date).getFullYear()}
+                                    </span>
+                                )}
+                                {item.vote_average > 0 && (
+                                    <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-orange-500/10 border border-orange-500/20 text-orange-400">
+                                        <Star className="w-4 h-4 fill-current" />
+                                        <span className="font-bold">{item.vote_average.toFixed(1)}</span>
+                                    </div>
+                                )}
+                                {item.runtime > 0 && (
+                                    <span className="px-3 py-1 rounded-full bg-white/5 border border-white/10">
+                                        {Math.floor(item.runtime / 60)}h {item.runtime % 60}m
+                                    </span>
+                                )}
+                            </div>
+
+                            <div className="space-y-4">
+                                <h3 className="text-2xl font-bold text-white">Overview</h3>
+                                <p className="text-gray-300 leading-relaxed text-lg">
+                                    {item.overview || "No overview available for this title."}
+                                </p>
+                            </div>
+
+                            {item.genres && item.genres.length > 0 && (
+                                <div className="space-y-3">
+                                    <h4 className="text-sm font-bold text-gray-500 uppercase tracking-wider">Genres</h4>
+                                    <div className="flex flex-wrap gap-2">
+                                        {item.genres.map((g) => (
+                                            <span
+                                                key={g.id}
+                                                className="px-3 py-1.5 rounded-lg bg-white/5 text-gray-300 border border-white/5 text-sm hover:bg-white/10 hover:text-white transition-colors cursor-default"
+                                            >
+                                                {g.name}
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Sidebar / Additional Info */}
+                    <div className="space-y-6">
+                        <div className="bg-amber-500/5 border border-amber-500/10 p-6 rounded-3xl flex flex-col gap-4">
+                            <div className="flex items-start gap-3">
+                                <AlertTriangle className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
+                                <h4 className="font-bold text-amber-500">Playback Issues?</h4>
+                            </div>
+                            <p className="text-sm text-gray-400 leading-relaxed">
+                                If you experience any playback errors, audio issues, or buffering, please try switching servers inside the player window.
+                            </p>
+                            <button
+                                onClick={() => window.location.reload()}
+                                className="w-full py-2.5 rounded-xl bg-amber-500/10 text-amber-500 font-bold hover:bg-amber-500/20 transition-colors flex items-center justify-center gap-2"
+                            >
+                                <RefreshCw className="w-4 h-4" />
+                                Refresh Page
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </main>
