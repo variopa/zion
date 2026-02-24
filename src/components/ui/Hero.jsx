@@ -153,7 +153,9 @@ export default function Hero({ movies }) {
             <TrailerModal
                 isOpen={isTrailerOpen}
                 onClose={() => setIsTrailerOpen(false)}
-                trailerId={trailerId}
+                movieId={trailerId}
+                movieTitle={currentMovie?.title}
+                mediaType="movie"
             />
         </div>
     );

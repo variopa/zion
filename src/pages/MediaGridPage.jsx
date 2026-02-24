@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import MovieCard from '@/components/ui/MovieCard';
-
+import { usePlatformMetrics } from '@/hooks/usePlatformMetrics';
+import AdBanner from '@/components/ui/AdBanner';
 import {
     getPopularMovies, getTopRatedMovies, getNowPlayingMovies, getUpcomingMovies,
     getPopularTVShows, getTopRatedTVShows,
@@ -17,6 +18,9 @@ export default function MediaGridPage({ type = 'movie', category = 'popular', ti
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const [heroItems, setHeroItems] = useState([]);
+
+    // Track Analytics
+    usePlatformMetrics(null);
 
     // Fetch Hero Content (Trending)
     useEffect(() => {
@@ -96,6 +100,9 @@ export default function MediaGridPage({ type = 'movie', category = 'popular', ti
             <Hero movies={heroItems} key={type} />
 
             <div className="container mx-auto px-6 py-12">
+                <div className="mb-8">
+                    <AdBanner />
+                </div>
                 <h2 className="text-3xl md:text-5xl font-black text-white mb-8 tracking-tight drop-shadow-lg border-l-4 border-orange-500 pl-4">
                     {title}
                 </h2>

@@ -2,8 +2,11 @@ import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import OptimizedImage from '@/components/ui/OptimizedImage';
 import MovieRow from '@/components/ui/MovieRow';
+import TrailerModal from '@/components/ui/TrailerModal';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import AdBanner from '@/components/ui/AdBanner';
+import { usePlatformMetrics } from '@/hooks/usePlatformMetrics';
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import {
@@ -16,16 +19,20 @@ import {
     getPosterUrl,
     formatDate
 } from '@/lib/tmdb';
-import { Loader2, Play, Star, Calendar, Layers, Info, Share2 } from 'lucide-react';
+import { Loader2, Play, Star, Calendar, Layers, Info, Share2, Video } from 'lucide-react';
 
 export default function TVDetails() {
     const { id } = useParams();
     const [tv, setTv] = useState(null);
+
+    // Track Analytics
+    usePlatformMetrics(tv?.name);
     const [credits, setCredits] = useState(null);
     const [similar, setSimilar] = useState([]);
     const [keywords, setKeywords] = useState([]);
     const [reviews, setReviews] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [isTrailerOpen, setIsTrailerOpen] = useState(false);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -140,6 +147,17 @@ export default function TVDetails() {
                                         Watch Now
                                     </Button>
                                 </Link>
+                                {tv.id && (
+                                    <Button
+                                        size="lg"
+                                        variant="outline"
+                                        className="rounded-full px-8 py-6 text-lg font-bold border-white/20 bg-white/5 hover:bg-white/10 backdrop-blur-sm text-white"
+                                        onClick={() => setIsTrailerOpen(true)}
+                                    >
+                                        <Video className="w-6 h-6 mr-2" />
+                                        Trailer
+                                    </Button>
+                                )}
                                 <Button size="lg" variant="ghost" className="rounded-full px-6 py-6 text-gray-300 hover:text-white hover:bg-white/5">
                                     <Share2 className="w-6 h-6 mr-2" />
                                     Share
@@ -152,6 +170,8 @@ export default function TVDetails() {
 
             {/* Details Content */}
             <div className="container mx-auto px-6 lg:px-12 py-12">
+                <AdBanner className="mb-12" />
+
                 <div className="grid grid-cols-1 lg:grid-cols-[1fr_350px] gap-12 lg:gap-24">
                     {/* Main Content */}
                     <div className="space-y-12">
@@ -228,6 +248,14 @@ export default function TVDetails() {
                     <MovieRow title="More Like This" items={similar} type="tv" />
                 </div>
             </div>
+
+            <TrailerModal
+                isOpen={isTrailerOpen}
+                onClose={() => setIsTrailerOpen(false)}
+                movieId={id}
+                movieTitle={tv.name}
+                mediaType="tv"
+            />
         </main>
     );
 }

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import MovieCard from '@/components/ui/MovieCard';
 import { getSearchResults } from '@/lib/tmdb';
+import { usePlatformMetrics } from '@/hooks/usePlatformMetrics';
 import { Loader2 } from 'lucide-react';
 
 export default function SearchPage() {
@@ -9,6 +10,10 @@ export default function SearchPage() {
     const query = searchParams.get('q') || '';
     const [results, setResults] = useState([]);
     const [loading, setLoading] = useState(false);
+
+    // Track Analytics
+    usePlatformMetrics(null);
+
 
     useEffect(() => {
         const fetchResults = async () => {

@@ -1,53 +1,66 @@
 import React from 'react';
-import { Button } from '@/components/ui/button';
-import { RefreshCw, AlertTriangle } from 'lucide-react';
 
-export class ErrorBoundary extends React.Component {
+class ErrorBoundary extends React.Component {
     constructor(props) {
         super(props);
         this.state = { hasError: false, error: null, errorInfo: null };
     }
 
     static getDerivedStateFromError(error) {
-        // Update state so the next render will show the fallback UI.
         return { hasError: true, error };
     }
 
     componentDidCatch(error, errorInfo) {
-        // You can also log the error to an error reporting service
-        console.error("Uncaught error:", error, errorInfo);
+        console.error("ErrorBoundary caught an error:", error, errorInfo);
         this.setState({ errorInfo });
     }
 
     render() {
         if (this.state.hasError) {
-            // You can render any custom fallback UI
             return (
-                <div className="min-h-screen w-full flex flex-col items-center justify-center bg-black text-white p-6 text-center">
-                    <div className="max-w-md w-full space-y-6 bg-white/5 border border-white/10 p-8 rounded-2xl backdrop-blur-md shadow-2xl">
-                        <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <AlertTriangle className="w-8 h-8 text-red-500" />
-                        </div>
-
-                        <h2 className="text-2xl font-bold">Something went wrong</h2>
-
-                        <p className="text-gray-400 text-sm">
-                            The application encountered an unexpected error. This might be a temporary glitch.
+                <div style={{
+                    padding: '40px',
+                    backgroundColor: '#0f172a',
+                    color: '#ff6700',
+                    minHeight: '100vh',
+                    fontFamily: 'monospace',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                }}>
+                    <h1 style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '20px' }}>Something went wrong 💀</h1>
+                    <div style={{
+                        backgroundColor: 'rgba(255, 103, 0, 0.1)',
+                        padding: '20px',
+                        borderRadius: '12px',
+                        border: '1px solid rgba(255, 103, 0, 0.3)',
+                        maxWidth: '800px',
+                        width: '100%',
+                        overflow: 'auto'
+                    }}>
+                        <p style={{ color: '#fff', fontSize: '18px', marginBottom: '10px' }}>
+                            <strong>Error:</strong> {this.state.error && this.state.error.toString()}
                         </p>
-
-                        {/* Development Message (Optional) */}
-                        <div className="text-xs text-left bg-black/50 p-4 rounded-lg font-mono text-red-300 overflow-auto max-h-32 opacity-80">
-                            {this.state.error && this.state.error.toString()}
-                        </div>
-
-                        <Button
-                            onClick={() => window.location.reload()}
-                            className="w-full bg-orange-600 hover:bg-orange-700 text-white font-bold py-6 rounded-xl"
-                        >
-                            <RefreshCw className="w-5 h-5 mr-2" />
-                            Reload Application
-                        </Button>
+                        <pre style={{ color: 'rgba(255,255,255,0.6)', fontSize: '12px', whiteSpace: 'pre-wrap' }}>
+                            {this.state.errorInfo && this.state.errorInfo.componentStack}
+                        </pre>
                     </div>
+                    <button
+                        onClick={() => window.location.reload()}
+                        style={{
+                            marginTop: '30px',
+                            padding: '12px 24px',
+                            backgroundColor: '#ff6700',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '8px',
+                            fontWeight: 'bold',
+                            cursor: 'pointer'
+                        }}
+                    >
+                        Reload Page
+                    </button>
                 </div>
             );
         }
@@ -55,3 +68,5 @@ export class ErrorBoundary extends React.Component {
         return this.props.children;
     }
 }
+
+export default ErrorBoundary;

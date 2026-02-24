@@ -1,14 +1,17 @@
 import { useEffect, useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import MovieCard from '@/components/ui/MovieCard';
-
+import { usePlatformMetrics } from '@/hooks/usePlatformMetrics';
 import { discoverMoviesByGenre, discoverTVShowsByGenre, getMovieGenres, getTVGenres } from '@/lib/tmdb';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function GenrePage() {
     const { id } = useParams();
     const [searchParams] = useSearchParams();
-    const type = searchParams.get('type') || 'movie'; // 'movie' or 'tv'
+    const type = searchParams.get('type') || 'movie';
+
+    // Track Analytics
+    usePlatformMetrics(null);
 
     const [items, setItems] = useState([]);
     const [loading, setLoading] = useState(true);

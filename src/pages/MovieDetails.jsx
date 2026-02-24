@@ -1,7 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { usePlatformMetrics } from '@/hooks/usePlatformMetrics';
+import AdBanner from '@/components/ui/AdBanner';
 import OptimizedImage from '@/components/ui/OptimizedImage';
 import MovieRow from '@/components/ui/MovieRow';
+import TrailerModal from '@/components/ui/TrailerModal';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
@@ -30,6 +33,10 @@ export default function MovieDetails() {
     const [keywords, setKeywords] = useState([]);
     const [reviews, setReviews] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [isTrailerOpen, setIsTrailerOpen] = useState(false);
+
+    // Track Analytics
+    usePlatformMetrics(movie?.title);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -147,12 +154,15 @@ export default function MovieDetails() {
                                     </Button>
                                 </Link>
 
-                                {trailerUrl && (
-                                    <Button asChild size="lg" variant="outline" className="rounded-full px-8 py-6 text-lg font-bold border-white/20 bg-white/5 hover:bg-white/10 backdrop-blur-sm text-white">
-                                        <a href={trailerUrl} target="_blank" rel="noopener noreferrer">
-                                            <Video className="w-6 h-6 mr-2" />
-                                            Trailer
-                                        </a>
+                                {movie.id && (
+                                    <Button
+                                        size="lg"
+                                        variant="outline"
+                                        className="rounded-full px-8 py-6 text-lg font-bold border-white/20 bg-white/5 hover:bg-white/10 backdrop-blur-sm text-white"
+                                        onClick={() => setIsTrailerOpen(true)}
+                                    >
+                                        <Video className="w-6 h-6 mr-2" />
+                                        Trailer
                                     </Button>
                                 )}
                             </div>
@@ -279,11 +289,23 @@ export default function MovieDetails() {
                     </div>
                 </div>
             )}
+            {/* Ad Placement */}
+            <div className="container mx-auto px-6 lg:px-12 py-8">
+                <AdBanner />
+            </div>
+
             {/* Similar Movies */}
-            <div className="mt-24">
+            <div className="mt-12">
                 <MovieRow title="More Like This" items={similar} type="movie" />
             </div>
 
-        </main >
+            <TrailerModal
+                isOpen={isTrailerOpen}
+                onClose={() => setIsTrailerOpen(false)}
+                movieId={id}
+                movieTitle={movie.title}
+                mediaType="movie"
+            />
+        </main>
     );
 }

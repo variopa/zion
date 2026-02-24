@@ -3,10 +3,15 @@ import Hero from '@/components/ui/Hero';
 import MovieRow from '@/components/ui/MovieRow';
 import { getTrending, getPopularMovies, getTopRatedMovies, getNowPlayingMovies, getPopularTVShows } from '@/lib/tmdb';
 import { Skeleton } from '@/components/ui/skeleton';
+import AdBanner from '@/components/ui/AdBanner';
+import { usePlatformMetrics } from '@/hooks/usePlatformMetrics';
 
 export default function Home() {
     const [heroMovies, setHeroMovies] = useState([]);
     const [heroLoading, setHeroLoading] = useState(true);
+
+    // Track Analytics
+    usePlatformMetrics(null);
 
     const [rows, setRows] = useState({
         trending: [],
@@ -116,6 +121,9 @@ export default function Home() {
                     ))
                 ) : (
                     <>
+                        <div className="px-6 md:px-12 mb-8">
+                            <AdBanner />
+                        </div>
                         <MovieRow title="Trending Now (HD)" items={rows.trending} />
                         <MovieRow title="Popular Movies" items={rows.popular} type="movie" viewAllHref="/movies" />
                         <MovieRow title="Top Rated TV" items={rows.popularTV} type="tv" viewAllHref="/tv" />
