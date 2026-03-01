@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Fragment } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Home, PlayCircle, Monitor, Search, X, Compass } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -52,7 +52,7 @@ export default function BottomNav() {
                         // Insert Search Button in middle
                         if (idx === 2) {
                             return (
-                                <>
+                                <Fragment key="search-section">
                                     <button
                                         key="search-trigger"
                                         onClick={() => setSearchOpen(true)}
@@ -77,7 +77,7 @@ export default function BottomNav() {
                                         <tab.icon className={`w-6 h-6 ${isActive ? 'fill-current' : ''}`} />
                                         <span className="text-[10px] font-medium">{tab.name}</span>
                                     </Link>
-                                </>
+                                </Fragment>
                             );
                         }
 

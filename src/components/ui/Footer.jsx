@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Twitter, Instagram, Disc, Mail, Send, Play } from 'lucide-react';
+import { Instagram, Send, Play } from 'lucide-react';
 
 export default function Footer() {
     const [currentYear, setCurrentYear] = useState(2024);
@@ -27,13 +27,34 @@ export default function Footer() {
                             Your premium destination for streaming entertainment. Experience cinema-quality viewing with advanced features.
                         </p>
                         <div className="flex items-center gap-4">
-                            {[Twitter, Instagram, Disc, Mail].map((Icon, i) => (
+                            {[
+                                { Icon: Instagram, href: "https://www.instagram.com/zionmovies1", label: "Instagram" },
+                                { Icon: Send, href: "https://t.me/zionmovies1", label: "Telegram" },
+                                {
+                                    Icon: () => (
+                                        <svg
+                                            viewBox="0 0 24 24"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            strokeWidth="2"
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            className="w-5 h-5"
+                                        >
+                                            <path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5" />
+                                        </svg>
+                                    ), href: "https://www.tiktok.com/@zionmovies", label: "TikTok"
+                                }
+                            ].map(({ Icon, href, label }, i) => (
                                 <a
                                     key={i}
-                                    href="#"
+                                    href={href}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
                                     className="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center text-gray-400 hover:bg-white/10 hover:text-white transition-all duration-300 hover:scale-110"
+                                    aria-label={label}
                                 >
-                                    <Icon className="w-5 h-5" />
+                                    <Icon />
                                 </a>
                             ))}
                         </div>

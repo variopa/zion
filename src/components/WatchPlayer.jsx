@@ -108,6 +108,8 @@ export default function WatchPlayer({ item, id, type = 'movie' }) {
                         src={embedUrl}
                         className="absolute inset-0 w-full h-full z-20 rounded-2xl"
                         allowFullScreen
+                        webkitallowfullscreen="true"
+                        mozallowfullscreen="true"
                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
                         title={item.title || item.name}
                         sandbox={selectedProvider.id === 'vidsrc_cc' ? "allow-scripts allow-forms allow-same-origin" : undefined}

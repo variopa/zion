@@ -220,6 +220,28 @@ export default function AdminAnalytics() {
         }
     };
 
+    const handlePurgeData = async () => {
+        if (!window.confirm('WARNING: This will permanently delete ALL analytics and tracking data older than 30 days. This action cannot be undone. Proceed?')) {
+            return;
+        }
+
+        setLoading(true);
+        try {
+            const { data, error: purgeError } = await supabase.rpc('purge_old_analytics');
+            if (purgeError) throw purgeError;
+
+            alert(`Cleanup successful!\n\n${data.message}\n- Purged Traffic: ${data.purged_traffic}\n- Purged Chatbot: ${data.purged_chatbot}\n- Purged Presence: ${data.purged_presence}`);
+
+            // Refresh data to reflect changes
+            await fetchAllAnalytics();
+        } catch (err) {
+            console.error('Purge error:', err);
+            setError(`Maintenance failed: ${err.message}`);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     if (loading) {
         return (
             <div className="h-[60vh] flex items-center justify-center">
@@ -272,36 +294,58 @@ export default function AdminAnalytics() {
                 <StatCard icon={Eye} label="Total Page Views" value={totalViews.toLocaleString()} subtext="All tracked events" color="purple" />
             </div>
 
-            {/* Superadmin System Health */}
+            {/* Superadmin System Health & Maintenance */}
             {userRole === 'superadmin' && (
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="p-6 rounded-2xl bg-gradient-to-br from-purple-500/10 to-blue-500/5 border border-purple-500/20"
-                >
-                    <h3 className="text-sm font-black text-purple-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-                        <Clock className="w-4 h-4" />
-                        System Health (Superadmin Only)
-                    </h3>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <div>
-                            <p className="text-2xl font-black text-white">{totalDbRows.toLocaleString()}</p>
-                            <p className="text-xs text-white/40 font-medium">DB Rows (30d)</p>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <motion.div
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        className="md:col-span-2 p-6 rounded-2xl bg-gradient-to-br from-purple-500/10 to-blue-500/5 border border-purple-500/20"
+                    >
+                        <h3 className="text-sm font-black text-purple-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                            <Clock className="w-4 h-4" />
+                            System Health (Superadmin Only)
+                        </h3>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <div>
+                                <p className="text-2xl font-black text-white">{totalDbRows.toLocaleString()}</p>
+                                <p className="text-xs text-white/40 font-medium">DB Rows (30d)</p>
+                            </div>
+                            <div>
+                                <p className="text-2xl font-black text-white">{adminCount}</p>
+                                <p className="text-xs text-white/40 font-medium">Active Admins</p>
+                            </div>
+                            <div>
+                                <p className="text-2xl font-black text-white">{topMovies.length}</p>
+                                <p className="text-xs text-white/40 font-medium">Tracked Titles</p>
+                            </div>
+                            <div>
+                                <p className="text-2xl font-black text-white">{topCountries.length}</p>
+                                <p className="text-xs text-white/40 font-medium">Countries Reached</p>
+                            </div>
                         </div>
+                    </motion.div>
+
+                    <motion.div
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        className="p-6 rounded-2xl bg-gradient-to-br from-red-500/10 to-orange-500/5 border border-red-500/20 flex flex-col justify-between"
+                    >
                         <div>
-                            <p className="text-2xl font-black text-white">{adminCount}</p>
-                            <p className="text-xs text-white/40 font-medium">Active Admins</p>
+                            <h3 className="text-sm font-black text-red-400 uppercase tracking-widest mb-1 flex items-center gap-2">
+                                <Activity className="w-4 h-4" />
+                                Maintenance
+                            </h3>
+                            <p className="text-xs text-white/40 font-medium mb-4">Keep database lean by purging old data</p>
                         </div>
-                        <div>
-                            <p className="text-2xl font-black text-white">{topMovies.length}</p>
-                            <p className="text-xs text-white/40 font-medium">Tracked Titles</p>
-                        </div>
-                        <div>
-                            <p className="text-2xl font-black text-white">{topCountries.length}</p>
-                            <p className="text-xs text-white/40 font-medium">Countries Reached</p>
-                        </div>
-                    </div>
-                </motion.div>
+                        <button
+                            onClick={handlePurgeData}
+                            className="w-full py-3 rounded-xl bg-red-500/20 border border-red-500/40 text-red-500 hover:bg-red-500 hover:text-white transition-all font-black text-xs uppercase tracking-widest shadow-lg shadow-red-500/10"
+                        >
+                            Purge Data &gt; 30 Days
+                        </button>
+                    </motion.div>
+                </div>
             )}
 
             {/* Daily Traffic Chart */}

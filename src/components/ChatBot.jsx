@@ -1,28 +1,82 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { MessageSquare, X, Send, Bot, User, Loader2, Sparkles, Film, Play, Zap, Info, ChevronRight } from 'lucide-react';
+import { supabase } from '../lib/supabase';
+import { MessageSquare, X, Send, Bot, User, Loader2, Sparkles, Film, Play, Zap, Info, ChevronRight, ThumbsUp, ThumbsDown, Star } from 'lucide-react';
 
-const PROXY_URL = import.meta.env.VITE_AI_PROXY_URL || 'https://variopa123-zionpai.hf.space/api/chat';
-
-const TEMPLATES = [
-    { label: "🔥 Action Movies", prompt: "Recommend 2 pulse-pounding action movies." },
-    { label: "💀 Like Deadpool", prompt: "I loved Deadpool. Recommend 2 similar movies." },
-    { label: "🧠 Mind-bending", prompt: "Recommend 2 cerebral movies like Inception." },
-    { label: "🎬 Zion Gems", prompt: "What are 2 must-watch gems on Zion right now?" }
-];
+const PROXY_URL = import.meta.env.VITE_AI_PROXY_URL || 'https://variopa123-zionpai.hf.space/api';
+const CHAT_ENDPOINT = `${PROXY_URL}/chat`;
+const STARTERS_ENDPOINT = `${PROXY_URL}/starters`;
 
 const ChatBot = () => {
     const [isOpen, setIsOpen] = useState(false);
     const [showBubble, setShowBubble] = useState(true);
     const [input, setInput] = useState('');
+    const [sessionId] = useState(crypto.randomUUID());
+    const [hasLoggedOpen, setHasLoggedOpen] = useState(false);
+    const [showRating, setShowRating] = useState(false);
+    const [ratingSubmitted, setRatingSubmitted] = useState(false);
     const [messages, setMessages] = useState([
-        { role: 'assistant', content: 'Welcome to **Zion**. I am your AI cinema concierge. What kind of atmosphere are you looking for in a film today?' }
+        { role: 'assistant', content: 'Welcome to **Zion**. I am your cinema consultant. Tell me what you want to watch today!', id: 'welcome' }
     ]);
     const [isLoading, setIsLoading] = useState(false);
+    const [activeTemplates, setActiveTemplates] = useState([]);
+    const [messageRatings, setMessageRatings] = useState({}); // Tracking ratings per message ID
+
+    const popSound = new Audio('https://assets.mixkit.co/active_storage/sfx/2354/2354-preview.mp3');
+    const tingSound = new Audio('https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3');
+
+    const trackEvent = async (eventType, metadata = {}, rating = null) => {
+        try {
+            const payload = {
+                session_id: sessionId,
+                event_type: eventType,
+                metadata,
+                ...(rating !== null && { rating })
+            };
+            const { error } = await supabase.from('chatbot_interactions').insert(payload);
+            if (error) {
+                console.error('Analytics Insert Error:', error.message, error.details);
+            } else {
+                console.log(`Analytics: ${eventType} tracked for session ${sessionId.slice(0, 8)}`);
+            }
+        } catch (error) {
+            console.error('Analytics Network Error:', error);
+        }
+    };
+
+    const fetchStarters = useCallback(async () => {
+        try {
+            const response = await axios.get(`${PROXY_URL}/starters`);
+            // Sanitize or fallback to simple ones if AI yaps
+            const received = response.data.slice(0, 4);
+            if (received.length > 0) {
+                setActiveTemplates(received);
+            } else {
+                throw new Error('Empty starters');
+            }
+        } catch (error) {
+            setActiveTemplates([
+                { label: "🎬 Best Action 2021", prompt: "Best action movie from 2021" },
+                { label: "📺 Top Rated Series", prompt: "Top rated series similar to Stranger Things" },
+                { label: "👻 Horror Classics", prompt: "Top rated romance movies from the 90s" },
+                { label: "🌌 Sci-Fi Gems", prompt: "Show me mind-bending sci-fi films like Interstellar" }
+            ]);
+        }
+    }, []);
+
+    useEffect(() => {
+        if (isOpen && !hasLoggedOpen) {
+            trackEvent('open', { timestamp: new Date().toISOString() });
+            setHasLoggedOpen(true);
+        }
+        if (isOpen && activeTemplates.length === 0) {
+            fetchStarters();
+        }
+    }, [isOpen, hasLoggedOpen, activeTemplates.length, fetchStarters]);
     const messagesEndRef = useRef(null);
 
     const scrollToBottom = () => {
@@ -37,44 +91,73 @@ const ChatBot = () => {
         if (isOpen) {
             setShowBubble(false);
         } else {
-            // Show bubble immediately on load
-            const initialTimer = setTimeout(() => setShowBubble(true), 1000);
+            const checkAndShowBubble = () => {
+                const now = Date.now();
+                const storedData = localStorage.getItem('zion_chatbot_bubble_throttling');
+                let data = storedData ? JSON.parse(storedData) : { count: 0, lastReset: now };
 
-            // Repeat every 5 minutes
-            const interval = setInterval(() => {
-                if (!isOpen) setShowBubble(true);
-            }, 300000); // 5 minutes
+                // Reset if 30 minutes passed
+                if (now - data.lastReset > 30 * 60 * 1000) {
+                    data = { count: 0, lastReset: now };
+                }
 
-            // Hide after 10 seconds of being shown
-            let hideTimer;
-            if (showBubble) {
-                hideTimer = setTimeout(() => setShowBubble(false), 10000);
-            }
+                if (data.count < 2) {
+                    setShowBubble(true);
+                    data.count += 1;
+                    localStorage.setItem('zion_chatbot_bubble_throttling', JSON.stringify(data));
+
+                    // Hide after 10 seconds
+                    setTimeout(() => setShowBubble(false), 10000);
+                }
+            };
+
+            // Initial show
+            const timer = setTimeout(checkAndShowBubble, 3000);
+
+            // Check every 5 minutes
+            const interval = setInterval(checkAndShowBubble, 300000);
 
             return () => {
-                clearTimeout(initialTimer);
+                clearTimeout(timer);
                 clearInterval(interval);
-                clearTimeout(hideTimer);
             };
         }
-    }, [isOpen, showBubble]);
+    }, [isOpen]);
 
     const handleSend = async (e, customPrompt = null) => {
         if (e) e.preventDefault();
-        const finalInput = customPrompt || input;
-        if (!finalInput.trim() || isLoading) return;
+        const finalInput = (customPrompt || input || '').trim();
+        if (!finalInput || isLoading) return;
 
         const userMessage = { role: 'user', content: finalInput };
         setMessages(prev => [...prev, userMessage]);
         if (!customPrompt) setInput('');
         setIsLoading(true);
+        popSound.play().catch(e => console.log('Audio disabled'));
 
         try {
-            const response = await axios.post(PROXY_URL, {
+            const response = await axios.post(CHAT_ENDPOINT, {
                 messages: [...messages, userMessage].map(m => ({ role: m.role, content: m.content }))
             });
 
-            setMessages(prev => [...prev, { role: 'assistant', content: response.data.content }]);
+            const content = response.data.content;
+            const assistantMsgId = crypto.randomUUID();
+            setMessages(prev => [...prev, { role: 'assistant', content, id: assistantMsgId }]);
+            tingSound.play().catch(e => console.log('Audio disabled'));
+
+            trackEvent('request', {
+                query: finalInput,
+                response_length: content.length,
+                is_template: !!customPrompt,
+                msg_id: assistantMsgId
+            });
+
+            // The old rating system is being replaced by inline per-message rating
+            // But we can still show the big one occasionally if helpful
+            if (messages.length >= 6 && !ratingSubmitted) {
+                setShowRating(true);
+            }
+
         } catch (error) {
             console.error('Chat Error:', error);
             setMessages(prev => [...prev, {
@@ -88,108 +171,158 @@ const ChatBot = () => {
 
     const MarkdownComponents = {
         h3: ({ children }) => (
-            <h3 className="text-xl font-black text-white mb-2 mt-6 first:mt-2 tracking-tight flex items-center gap-2">
-                <div className="w-1.5 h-6 bg-orange-500 rounded-full" />
-                {children}
+            <h3 className="text-[13px] font-black text-white mb-0.5 mt-3 first:mt-1 tracking-tight flex items-center gap-1.5">
+                <div className="w-0.5 h-4 bg-gradient-to-b from-orange-400 to-red-600 rounded-full flex-shrink-0" />
+                <span className="truncate">{children}</span>
             </h3>
         ),
-        a: ({ href, children, ...props }) => {
-            // Robust internal routing: handle absolute, relative, and malformed links
+        a: ({ href, children }) => {
             const hrefStr = String(href || '');
+            if (!hrefStr) return <span className="text-white/20 text-[10px] italic">Link unavailable</span>;
+
             const isInternal = hrefStr.includes('zionmovies.pro.et') || hrefStr.includes('/watch/');
             let targetPath = hrefStr;
-
             if (isInternal) {
-                // Extracts the /watch/... part even if there's a domain prefix or strange wrap
                 const match = hrefStr.match(/\/watch\/(movies|tv)\/\d+/);
                 targetPath = match ? match[0] : hrefStr.replace(/^https?:\/\/zionmovies\.pro\.et/, '').replace(/^\/+/, '/');
             }
-
             return (
                 <Link
-                    to={isInternal ? targetPath : hrefStr}
-                    className="inline-flex items-center gap-2 px-5 py-2.5 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-xl transition-all shadow-lg hover:shadow-orange-500/40 group mt-3 whitespace-nowrap"
+                    to={targetPath || '/'}
+                    className="flex items-center justify-center gap-1.5 px-3 py-1.5 mt-1.5 bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white text-[10px] font-bold rounded-lg transition-all shadow-md shadow-orange-500/20 hover:shadow-orange-500/40 group"
                 >
-                    <Play size={16} fill="white" />
-                    <span>{children || "Watch on Zion"}</span>
-                    <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform" />
+                    <Play size={10} fill="white" />
+                    <span>{children || 'Watch Now'}</span>
+                    <ChevronRight size={10} className="group-hover:translate-x-0.5 transition-transform" />
                 </Link>
             );
         },
         img: ({ src, alt }) => (
-            <div className="my-6 group relative rounded-xl overflow-hidden shadow-2xl border border-white/10 max-w-[200px] mx-auto bg-white/5">
+            <div className="my-1.5 group relative rounded-md overflow-hidden shadow-lg border border-white/10 max-w-[100px] mx-auto bg-white/5">
                 <img
                     src={src}
                     alt={alt}
-                    className="w-full object-cover aspect-[2/3] transform group-hover:scale-110 transition-transform duration-700"
+                    className="w-full object-cover aspect-[2/3] transform group-hover:scale-105 transition-transform duration-500"
                     loading="lazy"
                     onError={(e) => {
-                        e.target.src = 'https://via.placeholder.com/500x750?text=Poster+Missing';
+                        e.target.src = 'https://via.placeholder.com/300x450?text=No+Poster';
                         e.target.className += ' grayscale opacity-30';
                     }}
                 />
-                <div className="absolute inset-0 ring-1 ring-inset ring-white/20 rounded-xl" />
+                <div className="absolute inset-0 ring-1 ring-inset ring-white/20 rounded-md" />
             </div>
         ),
-        hr: () => <hr className="my-8 border-white/5" />,
-        p: ({ children }) => <p className="leading-relaxed text-white/90 mb-4 font-medium">{children}</p>
+        hr: () => <div className="my-2 border-t border-white/5" />,
+        p: ({ children }) => {
+            const text = String(children || '');
+            const matchRegex = /(\d{1,3})%\s*match/i;
+            const matchResult = text.match(matchRegex);
+            if (matchResult) {
+                const pct = parseInt(matchResult[1]);
+                const color = pct >= 85 ? 'from-green-500 to-emerald-600' : pct >= 70 ? 'from-yellow-500 to-orange-500' : 'from-red-500 to-orange-600';
+                return (
+                    <div className="flex items-center gap-1.5 mb-1 flex-wrap">
+                        <div className={`px-2 py-0.5 rounded-full bg-gradient-to-r ${color} text-[8px] font-black text-white uppercase tracking-wider shadow`}>
+                            {pct}% Match
+                        </div>
+                        <span className="text-[9px] text-white/40 font-medium">{text.replace(matchResult[0], '').replace(/[·•]/g, '').trim()}</span>
+                    </div>
+                );
+            }
+            return <p className="leading-snug text-white/60 text-[11px] mb-1 font-medium">{children}</p>;
+        },
+        em: ({ children }) => (
+            <span className="text-white/40 text-[10px] italic">{children}</span>
+        ),
+        strong: ({ children }) => (
+            <strong className="text-orange-400 font-black text-[11px]">{children}</strong>
+        )
+    };
+
+    const handleToggle = () => {
+        setIsOpen(!isOpen);
+        setShowBubble(false); // Hide bubble immediately when toggled
     };
 
     return (
-        <div className="fixed bottom-6 right-6 z-[9999] sm:bottom-8 sm:right-8">
-            {/* Bubble Message */}
-            <AnimatePresence>
-                {showBubble && !isOpen && (
-                    <motion.div
-                        initial={{ opacity: 0, y: 10, scale: 0.9 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.9 }}
-                        className="absolute bottom-16 right-0 mb-4 px-6 py-3 bg-white text-black font-bold text-[13px] rounded-2xl rounded-br-none shadow-2xl z-10 pointer-events-none ring-4 ring-orange-500/20 flex items-center whitespace-nowrap"
-                    >
-                        Don't know what to watch? Let me help you!
-                        <div className="absolute bottom-[-6px] right-0 w-3 h-3 bg-white rotate-45" />
-                    </motion.div>
-                )}
-            </AnimatePresence>
+        <div className="relative">
+            <div className="fixed bottom-6 right-6 z-[9998]">
+                {/* Toggle Button */}
+                <motion.button
+                    onClick={handleToggle}
+                    className="fixed bottom-6 right-6 w-16 h-16 rounded-full bg-orange-500 text-white shadow-[0_0_20px_rgba(255,103,0,0.4)] flex items-center justify-center z-50 hover:scale-110 active:scale-95 transition-all group"
+                    whileHover={{ y: -5 }}
+                    animate={{
+                        boxShadow: [
+                            "0 0 20px rgba(255,103,0,0.4)",
+                            "0 0 35px rgba(255,103,0,0.7)",
+                            "0 0 20px rgba(255,103,0,0.4)"
+                        ]
+                    }}
+                    transition={{
+                        duration: 2,
+                        repeat: Infinity,
+                        ease: "easeInOut"
+                    }}
+                >
+                    {isOpen ? <X size={28} /> : <MessageSquare size={28} />}
 
-            {/* Toggle Button */}
-            <motion.button
-                whileHover={{ scale: 1.1, rotate: 5 }}
-                whileTap={{ scale: 0.9 }}
-                onClick={() => setIsOpen(!isOpen)}
-                className="w-14 h-14 bg-gradient-to-br from-orange-500 via-orange-600 to-red-600 rounded-full flex items-center justify-center shadow-xl shadow-orange-500/40 text-white relative group mb-16 sm:mb-0"
-            >
-                <div className="absolute inset-0 rounded-full bg-white opacity-0 group-hover:opacity-20 transition-opacity" />
-                {isOpen ? <X size={28} /> : (
-                    <div className="relative">
-                        <MessageSquare size={28} />
-                        <span className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 border-2 border-[#0a0f1a] rounded-full animate-pulse" />
-                    </div>
-                )}
-            </motion.button>
+                    {/* Notification Bubble - Hidden on small mobile if it covers too much */}
+                    {!isOpen && showBubble && (
+                        <motion.div
+                            initial={{ opacity: 0, x: 20, scale: 0.8 }}
+                            animate={{
+                                opacity: 1,
+                                x: 0,
+                                scale: 1,
+                                y: [0, -5, 0]
+                            }}
+                            transition={{
+                                y: { duration: 2, repeat: Infinity, ease: "easeInOut" }
+                            }}
+                            className="absolute bottom-20 right-0 bg-gradient-to-br from-[#1a1f2e] to-[#0d111a] border border-orange-500/30 p-4 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.5)] min-w-[220px] hidden sm:block backdrop-blur-xl"
+                        >
+                            <div className="absolute inset-0 bg-orange-500/5 rounded-2xl animate-pulse" />
+                            <button
+                                onClick={(e) => { e.stopPropagation(); setShowBubble(false); }}
+                                className="absolute -top-2 -right-2 w-6 h-6 bg-white/10 rounded-full flex items-center justify-center hover:bg-white/20 transition-colors z-10"
+                            >
+                                <X size={12} />
+                            </button>
+                            <div className="relative z-10">
+                                <p className="text-sm font-bold text-white mb-1">Stuck on what to watch?</p>
+                                <p className="text-[10px] text-orange-500 font-black uppercase tracking-widest flex items-center gap-1.5">
+                                    <Sparkles size={10} className="animate-spin" />
+                                    Ask Zion AI Consultant
+                                </p>
+                            </div>
+                        </motion.div>
+                    )}
+                </motion.button>
+            </div>
 
             {/* Chat Window */}
             <AnimatePresence>
                 {isOpen && (
                     <motion.div
-                        initial={{ opacity: 0, y: 40, scale: 0.95, filter: 'blur(10px)' }}
-                        animate={{ opacity: 1, y: 0, scale: 1, filter: 'blur(0px)' }}
-                        exit={{ opacity: 0, y: 40, scale: 0.95, filter: 'blur(10px)' }}
-                        className="absolute bottom-20 sm:bottom-20 right-0 w-[340px] max-w-[calc(100vw-2rem)] h-[560px] max-h-[85vh] bg-[#0a0f1a]/95 backdrop-blur-3xl border border-white/10 rounded-[2rem] flex flex-col shadow-2xl overflow-hidden shadow-orange-500/10 mb-16 sm:mb-0"
+                        initial={{ opacity: 0, y: 100, scale: 0.9 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 100, scale: 0.9 }}
+                        className="fixed top-[120px] bottom-[110px] left-4 right-4 sm:top-auto sm:bottom-28 sm:right-6 sm:left-auto w-auto sm:w-[360px] h-auto sm:h-[480px] bg-[#0d111a] rounded-[2.5rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.7)] flex flex-col z-[99999] border border-white/10 overflow-hidden backdrop-blur-3xl"
                     >
                         {/* Header */}
                         <div className="p-5 bg-gradient-to-b from-white/5 to-transparent border-b border-white/5 flex items-center justify-between relative">
                             <div className="flex items-center gap-4">
-                                <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-red-600 rounded-xl flex items-center justify-center shadow-xl shadow-orange-500/20">
-                                    <Bot className="text-white" size={22} />
+                                <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-red-600 rounded-2xl flex items-center justify-center shadow-xl shadow-orange-500/30">
+                                    <Bot className="text-white" size={26} />
                                 </div>
                                 <div>
-                                    <h3 className="font-black text-white tracking-wide text-lg">
+                                    <h3 className="font-extrabold text-white tracking-tight text-xl">
                                         Zion AI
                                     </h3>
-                                    <div className="flex items-center gap-1.5">
-                                        <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                                        <p className="text-[10px] uppercase tracking-[0.2em] font-black text-white/40">Active Now</p>
+                                    <div className="flex items-center gap-2 mt-0.5">
+                                        <div className="w-2.5 h-2.5 bg-green-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.6)]" />
+                                        <p className="text-[11px] uppercase tracking-[0.25em] font-black text-white/50">Consultant Active</p>
                                     </div>
                                 </div>
                             </div>
@@ -199,7 +332,7 @@ const ChatBot = () => {
                         </div>
 
                         {/* Messages Area */}
-                        <div className="flex-1 overflow-y-auto p-5 space-y-6 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
+                        <div className="flex-1 overflow-y-auto p-3 space-y-4 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
                             {messages.map((msg, i) => (
                                 <motion.div
                                     key={i}
@@ -212,7 +345,7 @@ const ChatBot = () => {
                                             }`}>
                                             {msg.role === 'user' ? <User size={18} /> : <Bot size={18} />}
                                         </div>
-                                        <div className={`p-5 rounded-2xl shadow-sm prose prose-invert prose-sm max-w-none ${msg.role === 'user'
+                                        <div className={`p-3 rounded-2xl shadow-sm prose prose-invert prose-sm max-w-none overflow-hidden ${msg.role === 'user'
                                             ? 'bg-orange-500 text-white rounded-tr-none'
                                             : 'bg-white/5 text-white rounded-tl-none border border-white/5'
                                             }`}>
@@ -220,12 +353,41 @@ const ChatBot = () => {
                                                 {msg.content}
                                             </ReactMarkdown>
 
+                                            {/* Inline Feedback for Assistant Messages */}
+                                            {msg.role === 'assistant' && msg.id && msg.id !== 'welcome' && (
+                                                <div className="mt-3 pt-2 border-t border-white/5 flex items-center justify-between">
+                                                    <span className="text-[9px] uppercase tracking-widest font-black text-white/20">Was this helpful?</span>
+                                                    <div className="flex gap-2">
+                                                        <button
+                                                            onClick={() => {
+                                                                if (messageRatings[msg.id]) return;
+                                                                trackEvent('rating', { msg_id: msg.id, context: 'inline' }, 5);
+                                                                setMessageRatings(prev => ({ ...prev, [msg.id]: 5 }));
+                                                            }}
+                                                            className={`p-1.5 rounded-lg transition-all ${messageRatings[msg.id] === 5 ? 'bg-green-500/20 text-green-500' : 'hover:bg-white/5 text-white/20 hover:text-white'}`}
+                                                        >
+                                                            <ThumbsUp size={12} />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => {
+                                                                if (messageRatings[msg.id]) return;
+                                                                trackEvent('rating', { msg_id: msg.id, context: 'inline' }, 1);
+                                                                setMessageRatings(prev => ({ ...prev, [msg.id]: 1 }));
+                                                            }}
+                                                            className={`p-1.5 rounded-lg transition-all ${messageRatings[msg.id] === 1 ? 'bg-red-500/20 text-red-500' : 'hover:bg-white/5 text-white/20 hover:text-white'}`}
+                                                        >
+                                                            <ThumbsDown size={12} />
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            )}
+
                                             {/* Templates inside the first assistant message */}
                                             {i === 0 && msg.role === 'assistant' && (
                                                 <div className="mt-6 flex flex-col gap-2">
                                                     <p className="text-[10px] uppercase tracking-widest font-black text-white/20 mb-2">Pick a starting point</p>
                                                     <div className="grid grid-cols-1 gap-2">
-                                                        {TEMPLATES.map((tmpl, idx) => (
+                                                        {activeTemplates.map((tmpl, idx) => (
                                                             <button
                                                                 key={idx}
                                                                 onClick={() => handleSend(null, tmpl.prompt)}
@@ -263,6 +425,35 @@ const ChatBot = () => {
                             )}
                             <div ref={messagesEndRef} />
                         </div>
+
+                        {/* Rating Component */}
+                        <AnimatePresence>
+                            {showRating && !ratingSubmitted && (
+                                <motion.div
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: 20 }}
+                                    className="px-5 py-4 bg-orange-500/10 border-t border-white/5"
+                                >
+                                    <p className="text-[10px] uppercase tracking-widest font-black text-center text-white/40 mb-3">Rate my assistance</p>
+                                    <div className="flex justify-center gap-4">
+                                        {[1, 2, 3, 4, 5].map((num) => (
+                                            <button
+                                                key={num}
+                                                onClick={() => {
+                                                    trackEvent('rating', {}, num);
+                                                    setRatingSubmitted(true);
+                                                    setShowRating(false);
+                                                }}
+                                                className="text-2xl hover:scale-125 transition-transform grayscale hover:grayscale-0"
+                                            >
+                                                {num === 1 ? '😠' : num === 2 ? '😕' : num === 3 ? '😐' : num === 4 ? '🙂' : '🤩'}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
 
                         {/* Input Area */}
                         <div className="p-5 bg-gradient-to-t from-black/20 to-transparent border-t border-white/10">

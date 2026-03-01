@@ -1,6 +1,7 @@
 import Navbar from './ui/Navbar';
 import Footer from './ui/Footer';
 import BottomNav from './ui/BottomNav';
+import ChatBot from './ChatBot';
 
 
 export default function Layout({ children }) {
@@ -10,6 +11,7 @@ export default function Layout({ children }) {
             <main className="flex-1 w-full pt-16 lg:pt-24">
                 {children}
             </main>
+            <ChatBot />
             <Footer />
             <BottomNav />
         </div>

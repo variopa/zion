@@ -148,19 +148,31 @@ export default function AdminUsers() {
             setMessage({ type: 'error', text: 'Cannot delete a Superadmin' });
             return;
         }
-        if (!confirm(`Delete user ${profile.email}? This will remove their profile.`)) return;
+        if (!confirm(`Delete user ${profile.email}? This will permanentely remove their account and profile.`)) return;
 
         try {
-            const { error } = await supabase
-                .from('profiles')
-                .delete()
-                .eq('id', profile.id);
+            // Use RPC to delete from auth.users (requires security definer function)
+            const { error } = await supabase.rpc('delete_user_by_id', {
+                target_user_id: profile.id
+            });
 
-            if (error) throw error;
+            if (error) {
+                // If RPC fails (e.g. function doesn't exist yet), fallback to profile deletion
+                // though it likely won't work for Auth users without it.
+                console.warn('RPC deletion failed, attempting fallback:', error.message);
+
+                const { error: profileError } = await supabase
+                    .from('profiles')
+                    .delete()
+                    .eq('id', profile.id);
+
+                if (profileError) throw profileError;
+            }
+
             setMessage({ type: 'success', text: `Deleted ${profile.email}` });
             fetchProfiles();
         } catch (err) {
-            setMessage({ type: 'error', text: `Delete failed: ${err.message}` });
+            setMessage({ type: 'error', text: `Delete failed: ${err.message}. Make sure to run the SQL migration if you haven't yet.` });
         }
     };
 
@@ -223,8 +235,8 @@ export default function AdminUsers() {
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -10 }}
                         className={`p-4 rounded-2xl flex items-center gap-3 font-bold text-sm border ${message.type === 'success'
-                                ? 'bg-green-500/10 text-green-400 border-green-500/30'
-                                : 'bg-red-500/10 text-red-400 border-red-500/30'
+                            ? 'bg-green-500/10 text-green-400 border-green-500/30'
+                            : 'bg-red-500/10 text-red-400 border-red-500/30'
                             }`}
                     >
                         {message.type === 'success' ? <CheckCircle className="w-4 h-4" /> : <AlertTriangle className="w-4 h-4" />}

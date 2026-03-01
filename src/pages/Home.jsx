@@ -5,6 +5,7 @@ import { getTrending, getPopularMovies, getTopRatedMovies, getNowPlayingMovies, 
 import { Skeleton } from '@/components/ui/skeleton';
 import AdBanner from '@/components/ui/AdBanner';
 import { usePlatformMetrics } from '@/hooks/usePlatformMetrics';
+import SEO from '@/components/SEO';
 
 export default function Home() {
     const [heroMovies, setHeroMovies] = useState([]);
@@ -93,6 +94,10 @@ export default function Home() {
 
     return (
         <div className="bg-background min-h-screen pb-20 overflow-hidden">
+            <SEO
+                title="Watch Free HD Movies Online"
+                description="Experience ZION Movies - The premier destination for free movie streaming. Watch the latest blockbuster movies and trending TV shows in crystal clear HD quality."
+            />
             {/* Hero Section */}
             {heroLoading ? (
                 <div className="relative h-screen w-full bg-muted animate-pulse flex items-end pb-24 px-12">

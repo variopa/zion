@@ -21,7 +21,10 @@ export default function AdBanner({ className = '' }) {
                     .order('created_at', { ascending: false });
 
                 if (error) {
-                    console.error('Error fetching ad campaign:', error);
+                    // Only log real database errors, skip transient fetch failures to keep console clean
+                    if (error.message !== 'Failed to fetch') {
+                        console.error('Ad System:', error.message);
+                    }
                     return;
                 }
 
@@ -54,7 +57,7 @@ export default function AdBanner({ className = '' }) {
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, height: 0 }}
-                className={`relative w-full max-w-7xl mx-auto rounded-xl overflow-hidden shadow-2xl shadow-black/50 group ${className}`}
+                className={`relative w-full max-w-[1920px] mx-auto overflow-hidden shadow-2xl shadow-black/50 group border border-white/5 bg-white/5 backdrop-blur-sm aspect-[3/1] md:aspect-[4.8/1] ${className}`}
             >
                 {/* Close Button - Appears on Hover */}
                 <button
@@ -69,7 +72,7 @@ export default function AdBanner({ className = '' }) {
                     href={ad.destination_url || '#'}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="block w-full h-full"
+                    className="flex w-full h-full items-center justify-center bg-black/20"
                     onClick={() => {
                         // Track click in background
                         if (ad.id) {
@@ -89,7 +92,7 @@ export default function AdBanner({ className = '' }) {
                     <img
                         src={ad.mobile_image_url}
                         alt="Advertisement"
-                        className="w-full h-auto object-cover md:hidden"
+                        className="w-full h-full object-cover md:hidden"
                         loading="lazy"
                     />
 
@@ -97,7 +100,7 @@ export default function AdBanner({ className = '' }) {
                     <img
                         src={ad.desktop_image_url}
                         alt="Advertisement"
-                        className="hidden md:block w-full h-auto object-cover"
+                        className="hidden md:block w-full h-full object-cover"
                         loading="lazy"
                     />
                 </a>

@@ -11,7 +11,7 @@ export const getEmbedMasterUrl = (tmdbId, season, episode) => {
     const base = season && episode
         ? `https://embedmaster.link/tv/${tmdbId}/${season}/${episode}`
         : `https://embedmaster.link/movie/${tmdbId}`;
-    return `${base}?js=1&controls=0`;
+    return `${base}?js=1&controls=1`;
 };
 
 export const PROVIDERS = [

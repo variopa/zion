@@ -20,6 +20,7 @@ import {
     formatDate
 } from '@/lib/tmdb';
 import { Loader2, Play, Star, Calendar, Layers, Info, Share2, Video } from 'lucide-react';
+import SEO from '@/components/SEO';
 
 export default function TVDetails() {
     const { id } = useParams();
@@ -76,6 +77,21 @@ export default function TVDetails() {
 
     return (
         <main className="min-h-screen bg-background pb-20">
+            <SEO
+                title={tv.name}
+                description={tv.overview}
+                image={`https://image.tmdb.org/t/p/w1280${tv.backdrop_path}`}
+                url={`https://zionmovies.pro.et/tv/${id}`}
+                type="video.tv_show"
+                movieData={{
+                    title: tv.name,
+                    overview: tv.overview,
+                    poster_path: tv.poster_path,
+                    release_date: tv.first_air_date,
+                    vote_average: tv.vote_average,
+                    vote_count: tv.vote_count
+                }}
+            />
 
             {/* Cinematic Backdrop */}
             <div className="relative h-[85vh] w-full overflow-hidden">

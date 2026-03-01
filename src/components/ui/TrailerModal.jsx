@@ -7,6 +7,7 @@ export default function TrailerModal({ isOpen, onClose, trailerUrl: initialTrail
     const [isClosing, setIsClosing] = useState(false);
     const [trailerUrl, setTrailerUrl] = useState(initialTrailerUrl);
     const [loading, setLoading] = useState(false);
+    const [iframeLoading, setIframeLoading] = useState(true);
     const [error, setError] = useState(null);
     const { trackTrailerView } = useAnalytics();
 
@@ -28,6 +29,7 @@ export default function TrailerModal({ isOpen, onClose, trailerUrl: initialTrail
             document.body.style.overflow = 'unset';
             setTrailerUrl(null);
             setError(null);
+            setIframeLoading(true);
         }
         return () => {
             document.body.style.overflow = 'unset';
@@ -54,6 +56,7 @@ export default function TrailerModal({ isOpen, onClose, trailerUrl: initialTrail
             setError('Failed to load trailer');
         } finally {
             setLoading(false);
+            if (error) setIframeLoading(false);
         }
     };
 
@@ -85,10 +88,12 @@ export default function TrailerModal({ isOpen, onClose, trailerUrl: initialTrail
                     </button>
                 </div>
 
-                {loading ? (
+                {(loading || (trailerUrl && iframeLoading)) ? (
                     <div className="w-full h-full flex flex-col items-center justify-center bg-black space-y-4">
                         <Loader2 className="w-12 h-12 animate-spin text-orange-500" />
-                        <p className="text-white/60 font-medium animate-pulse">Fetching trailer...</p>
+                        <p className="text-white/60 font-medium animate-pulse">
+                            {loading ? 'Fetching trailer...' : 'Buffering...'}
+                        </p>
                     </div>
                 ) : error ? (
                     <div className="w-full h-full flex flex-col items-center justify-center text-white/40 space-y-6 p-8 text-center bg-[#0a0f1a]">
@@ -109,10 +114,11 @@ export default function TrailerModal({ isOpen, onClose, trailerUrl: initialTrail
                 ) : trailerUrl ? (
                     <iframe
                         src={`${trailerUrl}?autoplay=1&rel=0&modestbranding=1&origin=${window.location.origin}`}
-                        className="w-full h-full"
+                        className={`w-full h-full transition-opacity duration-500 ${iframeLoading ? 'opacity-0' : 'opacity-100'}`}
                         allowFullScreen
                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                         title="Trailer"
+                        onLoad={() => setIframeLoading(false)}
                     />
                 ) : (
                     <div className="w-full h-full flex flex-col items-center justify-center text-white/40 space-y-6 bg-[#0a0f1a]">

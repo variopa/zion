@@ -23,6 +23,7 @@ import {
     getTrailerUrl
 } from '@/lib/tmdb';
 import { Loader2, Play, Star, Calendar, Clock, Video, Share2, Info } from 'lucide-react';
+import SEO from '@/components/SEO';
 
 export default function MovieDetails() {
     const { id } = useParams();
@@ -82,6 +83,14 @@ export default function MovieDetails() {
 
     return (
         <main className="min-h-screen bg-background pb-20">
+            <SEO
+                title={movie.title}
+                description={movie.overview}
+                image={`https://image.tmdb.org/t/p/w1280${movie.backdrop_path}`}
+                url={`https://zionmovies.pro.et/movie/${id}`}
+                type="video.movie"
+                movieData={movie}
+            />
 
             {/* Cinematic Backdrop */}
             <div className="relative h-[85vh] w-full overflow-hidden">

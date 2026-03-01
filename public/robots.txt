@@ -1,5 +1,6 @@
-# ZION Movies - Robots.txt
-# https://zionmovies.pro.et
+# ==========================================
+# ZION Movies - Robots.txt (SEO Optimized)
+# ==========================================
 
 User-agent: *
 Allow: /
@@ -12,10 +13,16 @@ Allow: /genre/
 Allow: /movie/
 Allow: /tv/
 
-# Sensitive areas - do not index (COPYRIGHT PROTECTION)
+# Block non-value pages but allow assets
 Disallow: /api/
 Disallow: /admin/
 Disallow: /watch/
+Disallow: /src/
+Disallow: /node_modules/
+
+# Specifically block competitors and scrapers (Optional but good for SEO health)
+User-agent: GPTBot
+Disallow: /
 
 # Sitemap location
 Sitemap: https://zionmovies.pro.et/sitemap.xml

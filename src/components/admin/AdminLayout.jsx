@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Outlet, useNavigate, Link, useLocation } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { motion, AnimatePresence } from 'framer-motion';
-import { LayoutDashboard, Megaphone, Activity, LogOut, Loader2, Users, ShieldCheck, Shield, Menu, X } from 'lucide-react';
+import { LayoutDashboard, Megaphone, Activity, LogOut, Loader2, Users, ShieldCheck, Shield, Menu, X, MessageSquare } from 'lucide-react';
 
 const ROLE_CONFIG = {
     superadmin: { label: 'Superadmin', color: 'text-purple-400', bg: 'bg-purple-500/10', border: 'border-purple-500/30', icon: ShieldCheck },
@@ -118,6 +118,7 @@ export default function AdminLayout() {
 
     // Superadmin ONLY items
     if (userRole === 'superadmin') {
+        navItems.push({ name: 'Chatbot AI', path: '/birthna/chatbot', icon: MessageSquare });
         navItems.push({ name: 'Admin Management', path: '/birthna/users', icon: Users });
     }
 

@@ -86,13 +86,17 @@ export function usePlatformMetrics(movieTitle = null) {
             localStorage.setItem(cacheKey, 'true');
 
             // Fire and forget to Supabase
-            await supabase.from('site_traffic_logs').insert([{
+            const { error: insError } = await supabase.from('site_traffic_logs').insert([{
                 session_id: sessionIdRef.current,
                 path: path,
                 movie_title: movieTitle,
                 device_type: deviceType,
                 region_info: regionRef.current
             }]);
+
+            if (insError && insError.message !== 'Failed to fetch') {
+                console.warn('Analytics sync issue:', insError.message);
+            }
         } catch (error) {
             // Silently fail on network/duplicate errors to not crash frontend
             console.warn('Analytics silent fail:', error.message);
@@ -116,7 +120,7 @@ export function usePlatformMetrics(movieTitle = null) {
                 let deviceType = 'Desktop';
                 if (/Mobi|Android/i.test(userAgent)) deviceType = 'Mobile';
 
-                await supabase.from('active_presence').upsert({
+                const { error: upsError } = await supabase.from('active_presence').upsert({
                     session_id: sessionIdRef.current,
                     current_path: location.pathname,
                     movie_title: movieTitle,
@@ -124,6 +128,11 @@ export function usePlatformMetrics(movieTitle = null) {
                     region_info: regionRef.current,
                     last_heartbeat: new Date().toISOString()
                 }, { onConflict: 'session_id' });
+
+                if (upsError && upsError.message !== 'Failed to fetch') {
+                    // Only log real database errors, skip transient blips
+                    console.warn('Heartbeat update failed:', upsError.message);
+                }
             } catch (error) {
                 // Ignore silent heartbeat failures
             }
